@@ -222,7 +222,6 @@ This pulls in PyTorch — about **320 MB** — so it is kept out of
 | Renamed-variable code copy | 75% ✅ | 75% ✅ |
 | Recycled from a past semester | flagged ✅ | flagged ✅ |
 | **Paraphrase, no shared wording** | **47.7% — flagged ✅** | **39.1% — missed ❌** |
-| Run time, 7 submissions | 7.8s | 31.4s |
 
 The fallback still detects copying, but it is weakest at the one thing semantic
 analysis exists for, and it is *slower*, because it refits a TF-IDF model per
@@ -433,18 +432,14 @@ archives. If a particular file fails, install `unar`:
 `.zip` always works with no extra tools.
 
 **Detection is slow**
-Semantic analysis is the expensive part, and the embedding model takes ~6
-seconds to load on the very first run only. If you skipped step 6, the
-scikit-learn fallback is slower still. Measured with `sentence-transformers`
-installed, on a 400-word-per-student cohort:
+Semantic analysis is the expensive part. The embedding model loads once per
+server start, so the first run of a session is slower than the rest. The work
+also grows quadratically: every submission is compared with every other, so a
+class of 30 means 435 comparisons.
 
-| Class size | Pairs compared | Lexical only | + Structural | + Semantic |
-|---|---|---|---|---|
-| 20 | 190 | 0.06s | 0.18s | 10.9s |
-| 30 | 435 | 0.13s | 0.40s | 24.8s |
-
-To turn semantic analysis off entirely, set `SEMANTIC_ANALYSIS_ENABLED=False`
-in your `.env`, or pick a single algorithm instead of *Combined* when running.
+To speed it up, set `SEMANTIC_ANALYSIS_ENABLED=False` in your `.env`, or choose
+a single algorithm instead of *Combined* when running detection. Lexical and
+structural analysis are orders of magnitude faster than semantic.
 
 **I changed `.env` but nothing happened**
 Settings are read once when the server starts, and the auto-reloader only
@@ -456,9 +451,6 @@ again after any change to `.env`.
 it and restart the server. This is deliberate: an unconfigured deployment
 refuses teacher self-registration rather than leaving the role open to anyone.
 
-**`NotOpenSSLWarning` in the terminal**
-Harmless. It comes from urllib3 on macOS's bundled LibreSSL and does not affect
-the application.
 
 ---
 
