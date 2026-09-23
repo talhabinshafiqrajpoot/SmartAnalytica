@@ -1,0 +1,77 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Submit &mdash; {{ assignment.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'student_dashboard' %}">My Courses</a></li>
+    <li class="breadcrumb-item active">{{ assignment.title }}</li>
+  </ol>
+</nav>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">
+        {% if existing %}Replace your submission{% else %}Submit your work{% endif %}
+      </div>
+      <div class="card-body">
+        {% if assignment.is_past_due %}
+          <div class="alert alert-warning">
+            This assignment passed its deadline on {{ assignment.due_date|date:"d M Y, H:i" }}.
+            Your submission will be recorded as late.
+          </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% include 'academic/_form_fields.html' %}
+          <button class="btn btn-primary" type="submit">
+            {% if existing %}Replace submission{% else %}Submit{% endif %}
+          </button>
+          <a class="btn btn-link" href="{% url 'student_dashboard' %}">Cancel</a>
+        </form>
+      </div>
+    </div>
+
+    {% if existing %}
+      <div class="card mt-3">
+        <div class="card-header">Your current submission</div>
+        <div class="card-body small">
+          <dl class="row mb-0">
+            <dt class="col-4">File</dt>
+            <dd class="col-8"><a href="{{ existing.submitted_file.url }}">{{ existing.submitted_file.name }}</a></dd>
+            <dt class="col-4">Submitted</dt><dd class="col-8">{{ existing.submission_date|date:"d M Y, H:i" }}</dd>
+            <dt class="col-4">Format read</dt><dd class="col-8">{{ existing.extraction_format|default:"&mdash;" }}</dd>
+            <dt class="col-4">Words extracted</dt><dd class="col-8">{{ existing.word_count }}</dd>
+          </dl>
+          {% if existing.extraction_warnings %}
+            <div class="alert alert-warning mt-3 mb-0 small">{{ existing.extraction_warnings|linebreaksbr }}</div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">{{ assignment.title }}</div>
+      <div class="card-body small">
+        <dl class="row mb-0">
+          <dt class="col-5">Course</dt><dd class="col-7">{{ assignment.course.course_code }}</dd>
+          <dt class="col-5">Due</dt><dd class="col-7">{{ assignment.due_date|date:"d M Y, H:i" }}</dd>
+          <dt class="col-5">Format</dt><dd class="col-7">{{ assignment.submission_format }}</dd>
+          <dt class="col-5">Maximum marks</dt><dd class="col-7">{{ assignment.max_marks }}</dd>
+        </dl>
+        <hr>
+        <p class="text-secondary">{{ assignment.description }}</p>
+        {% if assignment.file_upload_instructions %}
+          <p class="mb-0"><strong>Instructions:</strong> {{ assignment.file_upload_instructions }}</p>
+        {% endif %}
+        {% if assignment.attachments %}
+          <hr><a href="{{ assignment.attachments.url }}"><i class="bi bi-paperclip"></i> Assignment brief</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Enrolment{% endblock %}
+{% block content %}
+<h3 class="mb-3">Student Enrolment</h3>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">Enrol students in a course</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% include 'academic/_form_fields.html' %}
+          <button class="btn btn-primary" type="submit">Enrol selected students</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">Current enrolment</div>
+      <div class="list-group list-group-flush">
+      {% for course in courses %}
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <strong>{{ course.course_code }} &mdash; {{ course.name }}</strong>
+            <span class="badge text-bg-secondary">{{ course.students.count }}</span>
+          </div>
+          <div class="small text-secondary mt-1">
+            {% for student in course.students.all %}
+              <span class="badge text-bg-light border me-1">{{ student.username }}</span>
+            {% empty %}Nobody enrolled yet.{% endfor %}
+          </div>
+        </div>
+      {% empty %}
+        <div class="list-group-item text-secondary">You have no courses yet.</div>
+      {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

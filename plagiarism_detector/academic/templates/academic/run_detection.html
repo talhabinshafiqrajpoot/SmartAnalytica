@@ -1,0 +1,92 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Run Detection{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'plagiarism_reports' %}">Reports</a></li>
+    <li class="breadcrumb-item active">Run detection</li>
+  </ol>
+</nav>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">{{ assignment.title }}</div>
+      <div class="card-body">
+        <dl class="row mb-0 small">
+          <dt class="col-5">Course</dt><dd class="col-7">{{ assignment.course.course_code }}</dd>
+          <dt class="col-5">Due</dt><dd class="col-7">{{ assignment.due_date|date:"d M Y, H:i" }}</dd>
+          <dt class="col-5">Maximum marks</dt><dd class="col-7">{{ assignment.max_marks }}</dd>
+          <dt class="col-5">Submissions</dt><dd class="col-7"><strong>{{ submission_count }}</strong></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Submissions to analyse</div>
+      <ul class="list-group list-group-flush small" style="max-height:300px; overflow-y:auto;">
+      {% for submission in submissions %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ submission.student.username }}</span>
+          <span class="text-secondary">
+            {% if submission.word_count %}{{ submission.word_count }} words
+            {% else %}<span class="text-danger">no text</span>{% endif %}
+          </span>
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">Select detection algorithm</div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.method.id_for_label }}">{{ form.method.label }}</label>
+            {{ form.method }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.threshold.id_for_label }}">{{ form.threshold.label }}</label>
+            {{ form.threshold }}
+            <div class="form-text">{{ form.threshold.help_text }}</div>
+          </div>
+          <button class="btn btn-primary" type="submit"
+                  {% if submission_count < 2 %}disabled{% endif %}>
+            <i class="bi bi-play-fill"></i> Run plagiarism check
+          </button>
+          {% if submission_count < 2 %}
+            <div class="text-danger small mt-2">At least two submissions are needed.</div>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">What each algorithm looks for</div>
+      <div class="card-body small">
+        <dl class="mb-0">
+          <dt>Combined analysis</dt>
+          <dd class="text-secondary">Weighted blend of fingerprinting, vocabulary, structure and meaning. Best general choice.</dd>
+          <dt>Jaccard Similarity</dt>
+          <dd class="text-secondary">Shared vocabulary, ignoring order and repetition.</dd>
+          <dt>Longest Common Subsequence</dt>
+          <dd class="text-secondary">Shared word order. Survives padding and insertions.</dd>
+          <dt>Levenshtein Distance</dt>
+          <dd class="text-secondary">Edit distance. Catches small disguising changes.</dd>
+          <dt>Cosine Similarity</dt>
+          <dd class="text-secondary">Term-frequency angle, weighted so class-wide boilerplate counts for less.</dd>
+          <dt>Rabin-Karp Fingerprinting</dt>
+          <dd class="text-secondary">Verbatim copied passages, via rolling hashes over 5-word windows.</dd>
+          <dt>Structural code analysis</dt>
+          <dd class="text-secondary">Compares program structure after stripping names and literals, so renaming does not hide a copy.</dd>
+          <dt>Semantic paraphrase detection</dt>
+          <dd class="text-secondary">Sentence embeddings compare meaning, catching rewording that shares no vocabulary.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

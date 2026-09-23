@@ -1,0 +1,19 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Edit assignment{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Edit assignment</div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          {% include 'academic/_form_fields.html' %}
+          <button class="btn btn-primary" type="submit">Save changes</button>
+          <a class="btn btn-link" href="{% url 'view_assignments' %}">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

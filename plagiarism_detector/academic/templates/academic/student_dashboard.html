@@ -1,0 +1,62 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">My Courses</h3>
+  <a class="btn btn-outline-secondary" href="{% url 'my_results' %}">My results</a>
+</div>
+
+{% for entry in course_rows %}
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between">
+      <span>{{ entry.course.course_code }} &mdash; {{ entry.course.name }}</span>
+      <span class="text-secondary small">{{ entry.course.instructors }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr><th>Assignment</th><th>Due</th><th>Marks</th><th>Status</th><th class="text-end">Action</th></tr>
+        </thead>
+        <tbody>
+        {% for row in entry.rows %}
+          <tr>
+            <td>
+              <strong>{{ row.assignment.title }}</strong>
+              <div class="small text-secondary">{{ row.assignment.description|truncatewords:14 }}</div>
+            </td>
+            <td class="small {% if row.is_past_due %}text-danger{% endif %}">
+              {{ row.assignment.due_date|date:"d M Y, H:i" }}
+              {% if row.is_past_due %}<div>past due</div>{% endif %}
+            </td>
+            <td>{{ row.assignment.max_marks }}</td>
+            <td>
+              {% if row.submission %}
+                <span class="badge text-bg-success">Submitted</span>
+                <div class="small text-secondary">{{ row.submission.submission_date|date:"d M, H:i" }}</div>
+                {% if not row.submission.has_text %}
+                  <span class="badge text-bg-warning mt-1">No text extracted</span>
+                {% endif %}
+              {% else %}
+                <span class="badge text-bg-secondary">Not submitted</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a class="btn btn-sm {% if row.submission %}btn-outline-primary{% else %}btn-primary{% endif %}"
+                 href="{% url 'submit_assignment' row.assignment.id %}">
+                {% if row.submission %}Replace{% else %}Submit{% endif %}
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-secondary text-center py-3">No assignments in this course yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% empty %}
+  <div class="card"><div class="card-body text-center text-secondary py-5">
+    You are not enrolled in any course yet. Your teacher enrols you.
+  </div></div>
+{% endfor %}
+{% endblock %}

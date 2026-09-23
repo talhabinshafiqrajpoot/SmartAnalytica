@@ -1,0 +1,81 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header">Create an account</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          {% for field in form %}
+            {% if field.name != 'role' and field.name != 'teacher_access_code' %}
+              <div class="mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+                {% for error in field.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endfor %}
+
+          <div class="mb-3">
+            <label class="form-label d-block">I am registering as</label>
+            {% for radio in form.role %}
+              <div class="form-check form-check-inline">
+                {{ radio.tag }}
+                <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+              </div>
+            {% endfor %}
+            {% for error in form.role.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+
+          {# Shown only for the teacher role. The server enforces this regardless
+             of what the browser does, so re-showing it here changes nothing. #}
+          <div class="mb-3" id="teacher-code-block" hidden>
+            <label class="form-label" for="{{ form.teacher_access_code.id_for_label }}">
+              {{ form.teacher_access_code.label }}
+            </label>
+            {{ form.teacher_access_code }}
+            <div class="form-text">{{ form.teacher_access_code.help_text }}</div>
+            {% for error in form.teacher_access_code.errors %}
+              <div class="text-danger small">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+          <button class="btn btn-primary" type="submit">Register</button>
+          <a class="btn btn-link" href="{% url 'login' %}">I already have an account</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  (function () {
+    var block = document.getElementById('teacher-code-block');
+    var radios = document.querySelectorAll('input[name="role"]');
+    if (!block || !radios.length) { return; }
+
+    function sync() {
+      var teacher = document.querySelector('input[name="role"]:checked');
+      block.hidden = !(teacher && teacher.value === 'teacher');
+    }
+
+    radios.forEach(function (radio) { radio.addEventListener('change', sync); });
+    sync();
+
+    // If the server rejected the code, keep the field visible so the message
+    // next to it is readable even before the user touches the radios.
+    if (block.querySelector('.text-danger')) { block.hidden = false; }
+  })();
+</script>
+{% endblock %}

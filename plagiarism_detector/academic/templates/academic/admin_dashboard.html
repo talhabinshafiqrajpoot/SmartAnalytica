@@ -1,0 +1,69 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Administrator Dashboard{% endblock %}
+{% block content %}
+<h3 class="mb-3">Administrator Dashboard</h3>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-2"><div class="card"><div class="card-body">
+    <div class="stat">{{ user_count }}</div><div class="stat-label">Users</div></div></div></div>
+  <div class="col-6 col-lg-2"><div class="card"><div class="card-body">
+    <div class="stat">{{ student_count }}</div><div class="stat-label">Students</div></div></div></div>
+  <div class="col-6 col-lg-2"><div class="card"><div class="card-body">
+    <div class="stat">{{ teacher_count }}</div><div class="stat-label">Teachers</div></div></div></div>
+  <div class="col-6 col-lg-2"><div class="card"><div class="card-body">
+    <div class="stat">{{ course_count }}</div><div class="stat-label">Courses</div></div></div></div>
+  <div class="col-6 col-lg-2"><div class="card"><div class="card-body">
+    <div class="stat">{{ submission_count }}</div><div class="stat-label">Submissions</div></div></div></div>
+  <div class="col-6 col-lg-2"><div class="card"><div class="card-body">
+    <div class="stat text-danger">{{ flagged_count }}</div><div class="stat-label">Flagged</div></div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">Detection runs <span class="badge text-bg-secondary">{{ report_count }}</span></div>
+      <div class="table-responsive">
+        <table class="table mb-0 small align-middle">
+          <thead><tr><th>Assignment</th><th>Method</th><th>By</th><th>Flagged</th><th>When</th></tr></thead>
+          <tbody>
+          {% for report in recent_reports %}
+            <tr>
+              <td><a href="{% url 'report_detail' report.id %}">{{ report.assignment.title|truncatechars:28 }}</a></td>
+              <td>{{ report.method }}</td>
+              <td>{{ report.generated_by.username|default:"-" }}</td>
+              <td>{{ report.flagged_count }}</td>
+              <td>{{ report.created_at|date:"d M H:i" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-secondary text-center py-3">No runs recorded.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer bg-white small">
+        Average similarity across all analysed submissions: <strong>{{ average_similarity }}%</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <span>Recent activity</span><a class="small" href="{% url 'activity_log' %}">Full log</a>
+      </div>
+      <ul class="list-group list-group-flush" style="max-height: 420px; overflow-y: auto;">
+      {% for entry in recent_activity %}
+        <li class="list-group-item py-2 small">
+          <span class="badge text-bg-light border">{{ entry.get_action_display }}</span>
+          <strong>{{ entry.user.username|default:"anonymous" }}</strong>
+          {{ entry.description }}
+          <div class="text-secondary">{{ entry.timestamp|date:"d M Y, H:i:s" }}</div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-secondary">Nothing logged yet.</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,360 @@
+manage.py"#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "plagiarism_detector.settings")
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == "__main__":
+    main()
+"
+
+apps.py"from django.apps import AppConfig
+
+class AcademicConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'academic'
+    verbose_name = "Academic"
+
+    def ready(self):
+        pass"
+
+forms.py"# academic/forms.py
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+from .models import UserProfile
+
+class RegistrationForm(UserCreationForm):
+    full_name = forms.CharField(max_length=100, required=True, help_text='Full Name')
+    email = forms.EmailField(max_length=200, help_text='Required')
+    phone_number = forms.CharField(max_length=15, required=True, help_text='Phone Number')
+    is_student = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'onclick': 'onlyOneCheckbox(this)'}))
+    is_teacher = forms.BooleanField(required=False, widget=forms.CheckboxInput(attrs={'onclick': 'onlyOneCheckbox(this)'}))
+
+    class Meta:
+        model = User
+        fields = ('username', 'full_name', 'email', 'phone_number', 'password1', 'password2', 'is_student', 'is_teacher')
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        if commit:
+            user.save()
+            user_profile = UserProfile(user=user)
+            user_profile.is_student = self.cleaned_data['is_student']
+            user_profile.is_teacher = self.cleaned_data['is_teacher']
+            user_profile.save()
+        return user
+"
+
+models.py"# models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    is_student = models.BooleanField(default=False)
+    is_teacher = models.BooleanField(default=False)
+    full_name = models.CharField(max_length=255, default="Default Name")  # Provide a default value
+    email = models.EmailField(blank=True, null=True)  # Allow email to be nullable
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+
+    def __str__(self):
+        role = 'Teacher' if self.is_teacher else 'Student'
+        return f"{self.user.username} ({role})"
+
+class Course(models.Model):
+    name = models.CharField(max_length=100)
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses_taught')
+
+    def __str__(self):
+        return self.name
+
+class Assignment(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    title = models.CharField(max_length=100)
+    deadline = models.DateTimeField()
+    content = models.FileField(upload_to='assignments/')
+
+    def __str__(self):
+        return self.title
+"
+
+urls.py"# academic/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('register/', views.register, name='register'),
+    path('login/', views.login_user, name='login'),
+    path('logout/', views.logout_user, name='logout'),  # Add this line
+    path('teacher_dashboard/', views.teacher_dashboard, name='teacher_dashboard'),
+    path('student_dashboard/', views.student_dashboard, name='student_dashboard'),
+    path('', views.home, name='home'),
+]
+"
+
+views.py"# academic/views.py
+from django.contrib.auth import login, authenticate, logout
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .forms import RegistrationForm
+from django.contrib.auth.forms import AuthenticationForm
+
+def register(request):
+    if request.method == 'POST':
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            return redirect('home')
+    else:
+        form = RegistrationForm()
+    return render(request, 'academic/register.html', {'form': form})
+
+def login_user(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                if hasattr(user, 'userprofile'):
+                    if user.userprofile.is_teacher:
+                        return redirect('teacher_dashboard')
+                    elif user.userprofile.is_student:
+                        return redirect('student_dashboard')
+                return redirect('home')
+            else:
+                return HttpResponse("Invalid username or password.")
+        else:
+            return HttpResponse("Invalid username or password.")
+    else:
+        form = AuthenticationForm()
+    return render(request, 'academic/login.html', {'form': form})
+
+def logout_user(request):
+    logout(request)
+    return redirect('home')
+
+@login_required
+def teacher_dashboard(request):
+    return render(request, 'academic/teacher_dashboard.html')
+
+@login_required
+def student_dashboard(request):
+    return render(request, 'academic/student_dashboard.html')
+
+def home(request):
+    return render(request, 'academic/home.html')
+"
+
+
+home.html"<!-- templates/academic/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Plagiarism Detector</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'register' %}">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">Login</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+    <div class="container mt-5">
+      <h1 class="text-center">Welcome to the Plagiarism Detector</h1>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/scripts.js' %}"></script>
+  </body>
+</html>
+"
+
+login.html"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Plagiarism Detector</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'register' %}">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">Login</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container mt-5">
+      <h1 class="text-center">Login</h1>
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            name="username"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            name="password"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Login</button>
+      </form>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/scripts.js' %}"></script>
+  </body>
+</html>
+"
+
+register.html"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Plagiarism Detector</a>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'register' %}">Register</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'login' %}">Login</a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+    <div class="container mt-5">
+      <h1 class="text-center">Register</h1>
+      <form method="post" action="{% url 'register' %}">
+        {% csrf_token %} {{ form.as_p }}
+        <button type="submit" class="btn btn-primary mt-3">Register</button>
+      </form>
+    </div>
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'js/scripts.js' %}"></script>
+  </body>
+</html>
+"
+
+student_dashboard.html"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard</title>
+  </head>
+  <body>
+    <h1>Logged in: Student Dashboard</h1>
+  </body>
+</html>
+"
+
+teacher_dashboard.html"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Dashboard</title>
+  </head>
+  <body>
+    <h1>Logged in: Teacher Dashboard</h1>
+  </body>
+</html>
+"
+
+

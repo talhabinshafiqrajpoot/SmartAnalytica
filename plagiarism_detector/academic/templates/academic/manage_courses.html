@@ -1,0 +1,47 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Manage Courses{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Manage Courses</h3>
+  <a class="btn btn-primary" href="{% url 'create_course' %}"><i class="bi bi-plus-lg"></i> New course</a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr><th>Code</th><th>Name</th><th>Department</th><th>Dates</th>
+            <th>Students</th><th>Assignments</th><th class="text-end">Actions</th></tr>
+      </thead>
+      <tbody>
+      {% for course in courses %}
+        <tr>
+          <td><code>{{ course.course_code }}</code></td>
+          <td>
+            <strong>{{ course.name }}</strong>
+            <div class="small text-secondary">{{ course.description|truncatewords:12 }}</div>
+          </td>
+          <td class="small">{{ course.department|default:"&mdash;" }}</td>
+          <td class="small text-secondary">{{ course.start_date|date:"d M Y" }} &rarr; {{ course.end_date|date:"d M Y" }}</td>
+          <td>{{ course.student_count }}</td>
+          <td>{{ course.assignment_count }}</td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'course_details' course.id %}">View</a>
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'edit_course' course.id %}">Edit</a>
+            <form method="post" action="{% url 'delete_course' course.id %}" class="d-inline"
+                  onsubmit="return confirm('Delete {{ course.name|escapejs }}? This also deletes its assignments and submissions.');">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-secondary py-4">
+          No courses yet. <a href="{% url 'create_course' %}">Create your first course</a>.
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

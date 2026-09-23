@@ -1,0 +1,51 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Assignments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Assignments</h3>
+  <a class="btn btn-primary" href="{% url 'create_assignment' %}"><i class="bi bi-plus-lg"></i> New assignment</a>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr><th>Title</th><th>Course</th><th>Due</th><th>Format</th>
+            <th>Marks</th><th>Submissions</th><th class="text-end">Actions</th></tr>
+      </thead>
+      <tbody>
+      {% for assignment in assignments %}
+        <tr>
+          <td>
+            <strong>{{ assignment.title }}</strong>
+            <div class="small text-secondary">{{ assignment.description|truncatewords:12 }}</div>
+          </td>
+          <td class="small"><code>{{ assignment.course.course_code }}</code></td>
+          <td class="small {% if assignment.is_past_due %}text-danger{% endif %}">
+            {{ assignment.due_date|date:"d M Y, H:i" }}
+          </td>
+          <td class="small">{{ assignment.submission_format }}</td>
+          <td>{{ assignment.max_marks }}</td>
+          <td><span class="badge text-bg-secondary">{{ assignment.submission_count }}</span></td>
+          <td class="text-end text-nowrap">
+            {% if assignment.submission_count > 1 %}
+              <a class="btn btn-sm btn-primary" href="{% url 'run_detection' assignment.id %}">
+                <i class="bi bi-shield-check"></i> Check
+              </a>
+            {% endif %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'edit_assignment' assignment.id %}">Edit</a>
+            <form method="post" action="{% url 'delete_assignment' assignment.id %}" class="d-inline"
+                  onsubmit="return confirm('Delete {{ assignment.title|escapejs }}? Its submissions are deleted too.');">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-center text-secondary py-4">No assignments yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

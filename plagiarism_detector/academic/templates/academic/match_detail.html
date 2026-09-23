@@ -1,0 +1,96 @@
+{% extends 'academic/base_generic.html' %}
+{% load custom_filters %}
+{% block title %}Match detail{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'plagiarism_reports' %}">Reports</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'report_detail' match.report.id %}">{{ match.report.assignment.title }}</a></li>
+    <li class="breadcrumb-item active">Match</li>
+  </ol>
+</nav>
+
+<div class="card mb-3">
+  <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1">
+        {{ match.submission_a.student.username }}
+        <i class="bi bi-arrow-left-right text-secondary mx-2"></i>
+        {{ match.submission_b.student.username }}
+      </h4>
+      <div class="text-secondary small">{{ match.report.assignment.title }}</div>
+    </div>
+    <div class="text-end">
+      <div class="stat">{{ match.score|floatformat:1 }}%</div>
+      <span class="badge sev-{{ match.score|severity_band }}">{{ match.score|severity_band|title }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">Algorithm breakdown</div>
+  <div class="card-body">
+    <div class="row g-3">
+    {% for name, value in match.method_scores.items %}
+      <div class="col-6 col-md-3">
+        <div class="stat-label">{{ name }}</div>
+        <div class="fw-bold">{{ value|floatformat:1 }}%</div>
+        <div class="meter mt-1"><span class="sev-{{ value|severity_band }}" style="width: {{ value }}%"></span></div>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header">
+    Verbatim matching passages
+    <span class="badge text-bg-secondary ms-1">{{ match.passage_count }}</span>
+  </div>
+  <div class="list-group list-group-flush">
+  {% for passage in match.matched_passages %}
+    <div class="list-group-item">
+      <div class="small text-secondary mb-1">
+        {{ passage.token_count }} words
+        {% if passage.note %}&middot; {{ passage.note }}{% endif %}
+      </div>
+      <div class="passage">{{ passage.text }}</div>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-secondary text-center py-4">
+      No verbatim passages long enough to report.
+    </div>
+  {% endfor %}
+  </div>
+</div>
+
+{% if match.paraphrase_matches %}
+<div class="card">
+  <div class="card-header">
+    Paraphrased passages
+    <span class="badge text-bg-secondary ms-1">{{ match.paraphrase_matches|length }}</span>
+    <span class="small text-secondary ms-2">detected by meaning, not wording</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table mb-0 small align-middle">
+      <thead>
+        <tr>
+          <th style="width:45%">{{ match.submission_a.student.username }}</th>
+          <th style="width:45%">{{ match.submission_b.student.username }}</th>
+          <th>Similarity</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for pair in match.paraphrase_matches %}
+        <tr>
+          <td>{{ pair.sentence_a }}</td>
+          <td>{{ pair.sentence_b }}</td>
+          <td><span class="badge sev-{{ pair.similarity|severity_band }}">{{ pair.similarity|floatformat:0 }}%</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

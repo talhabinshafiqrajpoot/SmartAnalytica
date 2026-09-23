@@ -1,0 +1,14 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Access denied{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 text-center py-5">
+    <div class="display-1 text-secondary">403</div>
+    <h4 class="mb-3">Access denied</h4>
+    <p class="text-secondary">
+      {{ exception|default:"Your account does not have permission to view this page." }}
+    </p>
+    <a class="btn btn-primary" href="{% url 'dashboard' %}">Back to my dashboard</a>
+  </div>
+</div>
+{% endblock %}

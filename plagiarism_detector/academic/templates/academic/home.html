@@ -1,0 +1,50 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}SmartAnalytica &mdash; Content Detection and Analysis{% endblock %}
+{% block content %}
+<div class="p-5 mb-4 bg-white rounded-3 border">
+  <div class="container-fluid py-3">
+    <h1 class="display-6 fw-bold">Content detection and analysis for programming assignments</h1>
+    <p class="col-lg-9 fs-5 text-secondary">
+      SmartAnalytica compares every submission for an assignment against every other one,
+      using lexical, structural and semantic analysis, and produces a report that shows
+      not just a percentage but the passages that matched and who they matched.
+    </p>
+    {% if not user.is_authenticated %}
+      <a class="btn btn-primary btn-lg" href="{% url 'register' %}">Create an account</a>
+      <a class="btn btn-outline-secondary btn-lg ms-2" href="{% url 'login' %}">Sign in</a>
+    {% else %}
+      <a class="btn btn-primary btn-lg" href="{% url 'dashboard' %}">Go to dashboard</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card h-100"><div class="card-body">
+      <h5 class="card-title"><i class="bi bi-fonts text-primary"></i> Lexical analysis</h5>
+      <p class="text-secondary mb-0">
+        Jaccard, Longest Common Subsequence, Levenshtein, Cosine and Rabin-Karp
+        fingerprinting locate shared vocabulary and verbatim copied passages.
+      </p>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100"><div class="card-body">
+      <h5 class="card-title"><i class="bi bi-diagram-2 text-primary"></i> Structural analysis</h5>
+      <p class="text-secondary mb-0">
+        Code is parsed into a structure-only token stream and fingerprinted with
+        winnowing, so renaming variables or reordering functions does not hide a copy.
+      </p>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100"><div class="card-body">
+      <h5 class="card-title"><i class="bi bi-translate text-primary"></i> Semantic analysis</h5>
+      <p class="text-secondary mb-0">
+        Sentence embeddings compare meaning rather than wording, catching
+        paraphrasing that every word-matching algorithm misses.
+      </p>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

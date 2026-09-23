@@ -1,0 +1,84 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}{{ course.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'manage_courses' %}">Courses</a></li>
+    <li class="breadcrumb-item active">{{ course.course_code }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h3 class="mb-1">{{ course.name }}</h3>
+    <div class="text-secondary"><code>{{ course.course_code }}</code> &middot; {{ course.department|default:"No department" }}</div>
+  </div>
+  <a class="btn btn-outline-primary" href="{% url 'edit_course' course.id %}">Edit course</a>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header">Details</div>
+      <div class="card-body small">
+        <dl class="row mb-0">
+          <dt class="col-5">Instructors</dt><dd class="col-7">{{ course.instructors }}</dd>
+          <dt class="col-5">Starts</dt><dd class="col-7">{{ course.start_date|date:"d M Y" }}</dd>
+          <dt class="col-5">Ends</dt><dd class="col-7">{{ course.end_date|date:"d M Y" }}</dd>
+          <dt class="col-5">Credits</dt><dd class="col-7">{{ course.credits|default:"&mdash;" }}</dd>
+          <dt class="col-5">Prerequisites</dt><dd class="col-7">{{ course.prerequisites|default:"None" }}</dd>
+        </dl>
+        <hr>
+        <p class="mb-0 text-secondary">{{ course.description }}</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span>Enrolled students</span>
+        <a class="small" href="{% url 'enroll_students' %}">Enrol</a>
+      </div>
+      <ul class="list-group list-group-flush small" style="max-height:320px;overflow-y:auto;">
+      {% for student in course.students.all %}
+        <li class="list-group-item">{{ student.username }}
+          <span class="text-secondary">{{ student.email }}</span></li>
+      {% empty %}
+        <li class="list-group-item text-secondary">No students enrolled yet.</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between">
+        <span>Assignments</span>
+        <a class="small" href="{% url 'create_assignment' %}">Add</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead><tr><th>Title</th><th>Due</th><th>Marks</th><th class="text-end">Actions</th></tr></thead>
+          <tbody>
+          {% for assignment in course.assignments.all %}
+            <tr>
+              <td>
+                <strong>{{ assignment.title }}</strong>
+                <div class="small text-secondary">{{ assignment.description|truncatewords:14 }}</div>
+              </td>
+              <td class="small">{{ assignment.due_date|date:"d M Y, H:i" }}</td>
+              <td>{{ assignment.max_marks }}</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-primary" href="{% url 'run_detection' assignment.id %}">Check</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_assignment' assignment.id %}">Edit</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-center text-secondary py-4">No assignments in this course.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

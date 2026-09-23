@@ -1,0 +1,174 @@
+{% extends 'academic/base_generic.html' %}
+{% load custom_filters %}
+{% block title %}Report &mdash; {{ report.assignment.title }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'plagiarism_reports' %}">Reports</a></li>
+    <li class="breadcrumb-item active">{{ report.assignment.title }}</li>
+  </ol>
+</nav>
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <h3 class="mb-1">{{ report.assignment.title }}</h3>
+    <div class="text-secondary small">
+      {{ report.assignment.course.course_code }} &middot;
+      {{ method_label }} &middot;
+      threshold {{ report.threshold|floatformat:0 }}% &middot;
+      run {{ report.created_at|date:"d M Y, H:i" }}
+      {% if report.generated_by %}by {{ report.generated_by.username }}{% endif %}
+    </div>
+  </div>
+  <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+    <i class="bi bi-printer"></i> Print
+  </button>
+</div>
+
+{% if report.notes %}
+  <div class="alert alert-warning small">{{ report.notes }}</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat">{{ report.submissions_analyzed }}</div><div class="stat-label">Submissions</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat">{{ report.pairs_compared }}</div><div class="stat-label">Pairs compared</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat text-danger">{{ report.flagged_count }}</div><div class="stat-label">Flagged</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat">{{ report.average_similarity }}%</div><div class="stat-label">Average similarity</div>
+  </div></div></div>
+</div>
+
+{% if report.archive_matches_found %}
+  <div class="alert alert-dark">
+    <i class="bi bi-archive"></i>
+    <strong>{{ report.archive_matches_found }}</strong> submission{{ report.archive_matches_found|pluralize }}
+    match work already submitted for a different assignment. See "Also submitted previously" below.
+  </div>
+{% endif %}
+
+<div class="card mb-4">
+  <div class="card-header">Similarity index by student</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr><th>Student</th><th style="width:26%">Similarity index</th><th>Severity</th>
+            <th>Marks</th><th>Assessment</th></tr>
+      </thead>
+      <tbody>
+      {% for result in results %}
+        <tr>
+          <td>
+            <strong>{{ result.submission.student.username }}</strong>
+            {% if result.is_exact_duplicate %}
+              <span class="badge text-bg-danger ms-1">exact duplicate</span>
+            {% endif %}
+            {% if result.matched_archive %}
+              <span class="badge text-bg-dark ms-1" title="Matches previously submitted work">
+                recycled work
+              </span>
+            {% endif %}
+            <div class="small text-secondary">{{ result.submission.word_count }} words</div>
+          </td>
+          <td>
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ result.similarity_index|floatformat:1 }}%</span>
+            </div>
+            <div class="meter">
+              <span class="sev-{{ result.severity }}" style="width: {{ result.similarity_index }}%"></span>
+            </div>
+          </td>
+          <td><span class="badge sev-{{ result.severity }}">{{ result.severity|title }}</span></td>
+          <td>
+            <strong>{{ result.marks_awarded|floatformat:1 }}</strong>
+            <span class="text-secondary">/ {{ report.assignment.max_marks }}</span>
+            {% if result.marks_deducted %}
+              <div class="small text-danger">-{{ result.marks_deducted|floatformat:1 }}</div>
+            {% endif %}
+          </td>
+          <td class="small text-secondary">
+            {{ result.summary }}
+            {% if result.archive_matches %}
+              <div class="mt-2">
+                <strong class="text-dark">Also submitted previously:</strong>
+                <ul class="mb-0 ps-3">
+                  {% for hit in result.archive_matches %}
+                    <li>
+                      {{ hit.assignment }} ({{ hit.course }}) by
+                      {% if hit.same_student %}this same student{% else %}{{ hit.student }}{% endif %},
+                      {{ hit.submitted }}
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-center text-secondary py-4">No submissions analysed.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between">
+    <span>Flagged pairs</span>
+    <span class="small text-secondary">at or above {{ report.threshold|floatformat:0 }}% similarity</span>
+  </div>
+  <div class="list-group list-group-flush">
+  {% for match in matches %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <strong>{{ match.submission_a.student.username }}</strong>
+          <i class="bi bi-arrow-left-right text-secondary mx-1"></i>
+          <strong>{{ match.submission_b.student.username }}</strong>
+          {% if match.is_exact_duplicate %}
+            <span class="badge text-bg-danger ms-2">identical</span>
+          {% endif %}
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge sev-{{ match.score|severity_band }} fs-6">{{ match.score|floatformat:1 }}%</span>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'match_detail' match.id %}">
+            Side by side
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-2 d-flex flex-wrap gap-2">
+        {% for name, value in match.method_scores.items %}
+          <span class="badge text-bg-light border">{{ name }}: {{ value|floatformat:1 }}%</span>
+        {% endfor %}
+      </div>
+
+      {% if match.matched_passages %}
+        <div class="mt-3">
+          <div class="small text-secondary mb-1">
+            {{ match.passage_count }} matching passage{{ match.passage_count|pluralize }} found.
+            Longest shown:
+          </div>
+          <div class="passage">{{ match.matched_passages.0.text }}</div>
+        </div>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="list-group-item text-center text-secondary py-4">
+      No pairs reached the {{ report.threshold|floatformat:0 }}% threshold.
+    </div>
+  {% endfor %}
+  </div>
+  {% if report.semantic_backend %}
+    <div class="card-footer bg-white small text-secondary">
+      Semantic backend: <code>{{ report.semantic_backend }}</code> &middot;
+      completed in {{ report.duration_seconds|floatformat:2 }}s
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+Creating a plagiarism detector involves comparing two text documents to determine the similarity between them. There are several algorithms and methods commonly used for detecting plagiarism. Here are some of the top algorithms you can consider implementing:
+
+1. **Cosine Similarity**:
+   - This method calculates the cosine of the angle between two vectors. These vectors represent text documents in a multi-dimensional space, with each dimension corresponding to a word from the documents. The cosine similarity ranges from -1 (completely different) to 1 (exactly the same), with higher values indicating more similarity.
+
+2. **Jaccard Similarity**:
+   - The Jaccard similarity measures the similarity between two sets. It is defined as the size of the intersection divided by the size of the union of the sample sets. For text comparison, the sets are the sets of words (or n-grams) in each document.
+
+3. **Levenshtein Distance (Edit Distance)**:
+   - This algorithm measures how many single-character edits (insertions, deletions, or substitutions) are necessary to change one word into another. It can be adapted to compare larger text blocks by considering how many edits are needed to transform one document into another.
+
+4. **Rabin-Karp Algorithm**:
+   - Primarily used for string searching, the Rabin-Karp algorithm uses hashing to find any one set of pattern strings in a text. It is effective in plagiarism detection for finding matching sequences of text within larger documents.

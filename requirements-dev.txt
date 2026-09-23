@@ -1,0 +1,7 @@
+# Development-only dependencies. NOT needed to run SmartAnalytica.
+# Install with:  pip install -r requirements-dev.txt
+#
+# Used by tools/capture_screenshots.py to regenerate the screenshots in
+# plagiarism_detector/docs/screenshots/. Drives the Chrome already installed
+# on the machine, so no separate browser download is required.
+playwright==1.60.0

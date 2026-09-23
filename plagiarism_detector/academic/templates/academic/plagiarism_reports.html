@@ -1,0 +1,94 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Plagiarism Reports{% endblock %}
+{% block content %}
+<h3 class="mb-3">Plagiarism Reports</h3>
+
+<div class="card mb-4">
+  <div class="card-header">Run a new detection</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead><tr><th>Assignment</th><th>Course</th><th>Submissions</th><th class="text-end">Action</th></tr></thead>
+      <tbody>
+      {% for assignment in assignments %}
+        <tr>
+          <td>{{ assignment.title }}</td>
+          <td class="small text-secondary">{{ assignment.course.course_code }}</td>
+          <td>
+            <span class="badge {% if assignment.submission_count > 1 %}text-bg-primary{% else %}text-bg-secondary{% endif %}">
+              {{ assignment.submission_count }}
+            </span>
+          </td>
+          <td class="text-end">
+            {% if assignment.submission_count > 1 %}
+              <a class="btn btn-sm btn-primary" href="{% url 'run_detection' assignment.id %}">
+                <i class="bi bi-play-fill"></i> Run detection
+              </a>
+            {% else %}
+              <span class="text-secondary small">Needs 2+ submissions</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-center text-secondary py-4">No assignments yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Past reports</div>
+  <div class="table-responsive">
+    <table class="table mb-0 align-middle">
+      <thead>
+        <tr><th>Assignment</th><th>Algorithm</th><th>Status</th><th>Analysed</th>
+            <th>Pairs</th><th>Flagged</th><th>Time</th><th>Run at</th><th></th></tr>
+      </thead>
+      <tbody>
+      {% for report in page %}
+        <tr>
+          <td>{{ report.assignment.title }}</td>
+          <td class="small">{{ report.get_method_display_name }}</td>
+          <td>
+            <span class="badge {% if report.status == 'complete' %}text-bg-success
+              {% elif report.status == 'failed' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+              {{ report.get_status_display }}
+            </span>
+          </td>
+          <td>{{ report.submissions_analyzed }}</td>
+          <td>{{ report.pairs_compared }}</td>
+          <td>
+            {% if report.flagged_count %}
+              <span class="badge text-bg-danger">{{ report.flagged_count }}</span>
+            {% else %}<span class="text-secondary">0</span>{% endif %}
+          </td>
+          <td class="small text-secondary">{{ report.duration_seconds|floatformat:2 }}s</td>
+          <td class="small text-secondary">{{ report.created_at|date:"d M Y, H:i" }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'report_detail' report.id %}">View</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="9" class="text-center text-secondary py-4">
+          No reports generated yet.
+        </td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page.has_other_pages %}
+    <div class="card-footer bg-white">
+      <nav><ul class="pagination pagination-sm mb-0">
+        {% if page.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">
+          Page {{ page.number }} of {{ page.paginator.num_pages }}</span></li>
+        {% if page.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}">Next</a></li>
+        {% endif %}
+      </ul></nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

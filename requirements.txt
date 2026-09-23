@@ -1,0 +1,18 @@
+# SmartAnalytica: Content Detection and Analysis
+# Core web framework
+Django==4.2.16
+python-decouple==3.8
+pytz==2024.2
+
+# Step 1-2: document intake and text extraction
+pypdf==4.3.1
+python-docx==1.1.2
+rarfile==4.2
+
+# Step 4: semantic / NLP analysis (optional but recommended)
+scikit-learn==1.5.2
+numpy==1.26.4
+
+# Development / testing
+pytest==8.3.3
+pytest-django==4.9.0

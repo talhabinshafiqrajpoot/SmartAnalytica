@@ -1,0 +1,63 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Activity Log{% endblock %}
+{% block content %}
+<h3 class="mb-3">Activity Log</h3>
+
+<form class="card card-body mb-3" method="get">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label small">Action</label>
+      <select name="action" class="form-select">
+        <option value="">All actions</option>
+        {% for value, label in action_choices %}
+          <option value="{{ value }}" {% if value == current_action %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-5">
+      <label class="form-label small">Search</label>
+      <input type="text" name="q" class="form-control" value="{{ query }}" placeholder="user or description">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-primary w-100" type="submit">Filter</button>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table mb-0 small align-middle">
+      <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Description</th><th>IP</th></tr></thead>
+      <tbody>
+      {% for entry in page %}
+        <tr>
+          <td class="text-nowrap text-secondary">{{ entry.timestamp|date:"d M Y, H:i:s" }}</td>
+          <td>{{ entry.user.username|default:"anonymous" }}</td>
+          <td><span class="badge text-bg-light border">{{ entry.get_action_display }}</span></td>
+          <td>{{ entry.description }}</td>
+          <td class="text-secondary">{{ entry.ip_address|default:"&mdash;" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-center text-secondary py-4">No activity matches this filter.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page.has_other_pages %}
+    <div class="card-footer bg-white">
+      <nav><ul class="pagination pagination-sm mb-0">
+        {% if page.has_previous %}
+          <li class="page-item"><a class="page-link"
+            href="?page={{ page.previous_page_number }}&action={{ current_action }}&q={{ query }}">Previous</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">
+          Page {{ page.number }} of {{ page.paginator.num_pages }}</span></li>
+        {% if page.has_next %}
+          <li class="page-item"><a class="page-link"
+            href="?page={{ page.next_page_number }}&action={{ current_action }}&q={{ query }}">Next</a></li>
+        {% endif %}
+      </ul></nav>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

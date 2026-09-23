@@ -1,0 +1,94 @@
+{% extends 'academic/base_generic.html' %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h3 class="mb-0">Teacher Dashboard</h3>
+  <div>
+    <a class="btn btn-primary" href="{% url 'create_course' %}"><i class="bi bi-plus-lg"></i> New course</a>
+    <a class="btn btn-outline-primary" href="{% url 'create_assignment' %}">New assignment</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat">{{ courses|length }}</div><div class="stat-label">Courses</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat">{{ assignment_count }}</div><div class="stat-label">Assignments</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat">{{ submission_count }}</div><div class="stat-label">Submissions</div>
+  </div></div></div>
+  <div class="col-6 col-lg-3"><div class="card"><div class="card-body">
+    <div class="stat text-danger">{{ flagged_count }}</div><div class="stat-label">Flagged</div>
+  </div></div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between">
+        <span>My courses</span><a class="small" href="{% url 'manage_courses' %}">Manage</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0 align-middle">
+          <thead><tr><th>Code</th><th>Name</th><th>Students</th><th>Assignments</th><th></th></tr></thead>
+          <tbody>
+          {% for course in courses %}
+            <tr>
+              <td><code>{{ course.course_code }}</code></td>
+              <td>{{ course.name }}</td>
+              <td>{{ course.student_count }}</td>
+              <td>{{ course.assignment_count }}</td>
+              <td class="text-end"><a class="btn btn-sm btn-outline-secondary"
+                    href="{% url 'course_details' course.id %}">Open</a></td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-secondary text-center py-4">
+              No courses yet. <a href="{% url 'create_course' %}">Create one</a>.
+            </td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header">Recent detection runs</div>
+      <ul class="list-group list-group-flush">
+      {% for report in recent_reports %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <a href="{% url 'report_detail' report.id %}">{{ report.assignment.title }}</a>
+            <div class="small text-secondary">{{ report.created_at|date:"d M Y, H:i" }}</div>
+          </div>
+          <span class="badge {% if report.flagged_count %}text-bg-danger{% else %}text-bg-success{% endif %}">
+            {{ report.flagged_count }} flagged
+          </span>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-secondary">
+          No runs yet. <a href="{% url 'plagiarism_reports' %}">Run detection</a>.
+        </li>
+      {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Upcoming deadlines</div>
+      <ul class="list-group list-group-flush">
+      {% for assignment in upcoming %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ assignment.title }}</span>
+          <span class="text-secondary small">{{ assignment.due_date|date:"d M, H:i" }}</span>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-secondary">Nothing upcoming.</li>
+      {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
