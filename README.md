@@ -8,6 +8,10 @@ percentage, but **the exact passages that matched and who they matched**.
 > Final Year Project · BS(Hons) Computer Science · Session 2020–2024
 > Department of Computer Science, GC University Lahore
 
+📄 **[Full project documentation](SmartAnalytica-Documentation.pdf)** — the
+complete dissertation: problem statement, literature review, requirements,
+system design, implementation and evaluation.
+
 ---
 
 ## Table of contents
@@ -21,6 +25,7 @@ percentage, but **the exact passages that matched and who they matched**.
 7. [Configuration](#configuration)
 8. [Project structure](#project-structure)
 9. [Limits and known gaps](#limits-and-known-gaps)
+10. [Future work](#future-work)
 
 ---
 
@@ -559,7 +564,7 @@ that way, with the measurements behind each one.
 Stated plainly, so nobody is surprised:
 
 - **This detects copying between students, not AI-generated text.** There is no
-  ChatGPT/LLM-output detector.
+  ChatGPT/LLM-output classifier yet — see [Future work](#future-work) below.
 - **No external corpus.** Comparison covers submissions inside this system.
   There is no comparison against the web, GitHub or published papers.
 - **Scanned PDFs cannot be analysed** — no OCR. The app says so rather than
@@ -571,6 +576,40 @@ Stated plainly, so nobody is surprised:
 - **No localization.** English only.
 - **A high score is evidence, not a verdict.** The report exists so that a human
   reads the matched passages and decides. Automatic marks are a suggestion.
+
+---
+
+## Future work
+
+Planned extensions, following chapter 5.2 of the
+[project documentation](SmartAnalytica-Documentation.pdf):
+
+**AI-generated content detection.** The headline next step. The system
+currently finds copying *between students*; it does not judge whether a
+submission was written by a language model. The groundwork is already in place
+— submissions are extracted, normalized and embedded, so an authorship
+classifier would sit alongside the existing analysers rather than replace
+anything. The hard part is not the plumbing but the accuracy: a false
+accusation of AI use is far more damaging than a missed one, which is why this
+ships as future work rather than as a half-reliable feature.
+
+**Enhanced detection algorithms** (5.2.1) — a larger, fine-tuned embedding
+model, and structural analysis extended beyond Python's AST to Java and C++
+parsers.
+
+**Learning management system integration** (5.2.2) — submission and grade
+sync with Moodle, Canvas or Blackboard, so the tool fits an existing workflow
+instead of asking staff to adopt another portal.
+
+**Feedback mechanisms** (5.2.3) — turning a similarity score into actionable
+guidance: what to cite, how to paraphrase properly, where the student's own
+voice is strongest.
+
+**External corpus** — comparison against public code repositories and the web,
+not only submissions held in this system.
+
+**Scalability** (5.2.4) — comparisons grow quadratically, so a background task
+queue and a server-grade database would be needed before institution-wide use.
 
 ---
 
